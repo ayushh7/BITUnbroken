@@ -1,4 +1,4 @@
-package com.example.bitunbroken
+package com.ayush.bitunbroken
 
 import io.flutter.embedding.android.FlutterActivity
 
