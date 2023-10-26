@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Color(0xFFF6F2F2),
+                      backgroundColor: Color(0xFFF6F2F2),
                         shape: StadiumBorder()
                     ),
                     child: Text(
@@ -121,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                       // Add Google Sign-In logic here
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.white,
+                      backgroundColor: Colors.white,
                         shape: StadiumBorder()// Black button color
                     ),
                     icon: Icon(
@@ -143,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     style: ElevatedButton.styleFrom(
 
-                      primary: Color(0xFFEAE9E9),
+                      backgroundColor: Color(0xFFEAE9E9),
                         shape: StadiumBorder()// Charcoal button color
                     ),
                     child: Text(

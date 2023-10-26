@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -8,9 +10,8 @@ plugins {
 dependencies {
     implementation platform('com.google.firebase:firebase-bom:32.4.0')
     implementation 'com.google.firebase:firebase-analytics-ktx'
-    implementation 'com.google.firebase:firebase-crashlytics'
-    implementation "com.google.dagger:hilt-android:2.3 k8.1"
-    kapt "com.google.dagger:hilt-android-compiler:2.38.1"
+    implementation "com.google.dagger:hilt-android:2.38.1"
+//    kapt "com.google.dagger:hilt-android-compiler:2.38.1"
 }
 android {
     namespace "com.ayush.bitunbroken"
@@ -25,6 +26,9 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    lintOptions {
+        abortOnError false
+    }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -33,19 +37,36 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.ayush.bitunbroken"
+        manifestPlaceholders = [applicationName: "BITUnbroken"]
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 26
-        targetSdkVersion 31
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
+        minSdkVersion 21
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+//        versionCode flutterVersionCode.toInteger()
+//        versionName flutterVersionName
+
+    }
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "BITUnbroken-${variant.buildType.manifestPlaceholders.applicationName}.apk"
+        }
     }
 
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
+            manifestPlaceholders = [applicationName: "BITUnbroken"]
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
+        }
+        debug {
+            // ...
+            manifestPlaceholders = [applicationName: "BITUnbroken (Debug)"]
         }
     }
 }

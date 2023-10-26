@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:bitunbroken/screens/Profile.dart';
 import 'package:flutter/material.dart';
-import 'package:bitunbroken/screens/splashscreen.dart';
 import 'package:bitunbroken/screens/login_screen.dart';
 import 'package:bitunbroken/screens/signup_screen.dart';
 import 'package:bitunbroken/screens/home_screen.dart';

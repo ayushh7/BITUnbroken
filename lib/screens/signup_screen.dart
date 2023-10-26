@@ -176,7 +176,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Color(0xFF070707), // Charcoal button color
+                      backgroundColor: Color(0xFF070707), // Charcoal button color
                     ),
                     child: Text(
                       'Sign Up',
@@ -193,7 +193,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       // Add Google Sign-In logic here
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.black, // Black button color
+                      backgroundColor: Colors.black, // Black button color
                     ),
                     icon: Icon(
                       FontAwesomeIcons.google,
