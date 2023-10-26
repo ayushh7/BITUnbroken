@@ -10,6 +10,44 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  Future<void> _showSignInSuccessAlert(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Success'),
+          content: Text('You have successfully signed in.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  Future<void> _showIncorrectCredentialsAlert(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text('Incorrect email or password. Please try again.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   final AuthService _auth = AuthService();
   late String _email;
   late String _password;
@@ -96,7 +134,10 @@ class _LoginPageState extends State<LoginPage> {
 
                       User? user = await _auth.signInWithEmailAndPassword(_email, _password);
                       if (user != null) {
+                        _showSignInSuccessAlert(context);
                         Navigator.of(context).pushReplacementNamed('/home');
+                      } else {
+                        _showIncorrectCredentialsAlert(context);
                       }
                     },
                     style: ElevatedButton.styleFrom(

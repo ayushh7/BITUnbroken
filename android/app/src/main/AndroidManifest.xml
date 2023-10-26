@@ -3,7 +3,7 @@
 
     <application
         android:icon="@mipmap/ic_launcher"
-        android:label="bitunbroken">
+        android:label="BITUnbroken">
         <activity
             android:name=".MainActivity"
             android:exported="true"

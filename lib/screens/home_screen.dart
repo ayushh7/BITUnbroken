@@ -18,7 +18,6 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text('Unbroken'),
         backgroundColor: primaryColor,
-
         actions: [
           IconButton(
             icon: Icon(Icons.event),
@@ -38,7 +37,6 @@ class _HomePageState extends State<HomePage> {
               // Handle Jobs button action
             },
           ),
-
         ],
       ),
       body: Container(
@@ -72,11 +70,11 @@ class _HomePageState extends State<HomePage> {
             // If the "Profile" tab is tapped (index 2), navigate to the profile page.
             Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => ProfilePage(),
-            ));
+              ),
+            );
           }
         },
       ),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Add a post logic here
@@ -109,7 +107,7 @@ class PostWidget extends StatelessWidget {
     return Card(
       margin: EdgeInsets.all(8),
       elevation: 2,
-      color: Colors.white, // White background color
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -150,7 +148,6 @@ class PostWidget extends StatelessWidget {
                     // Other widgets...
                   ],
                 ),
-
                 SizedBox(width: 20), // Add spacing between icons
                 Icon(Icons.chat_bubble_outline),
                 SizedBox(width: 20), // Add spacing between icons

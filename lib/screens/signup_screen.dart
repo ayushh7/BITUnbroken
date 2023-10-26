@@ -10,6 +10,25 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  Future<void> _showSignUpSuccessAlert(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Success'),
+          content: Text('You have registered successfully.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   final AuthService _auth = AuthService();
   late String _name;
   late String _email;
@@ -21,17 +40,17 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        automaticallyImplyLeading: false, // Hide the default back button space
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white), // Set the arrow color
-          onPressed: () {
-            Navigator.of(context).pushReplacementNamed('/login');
-            // Handle the back nabutton action here
-          },
-        ),
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.black,
+      //   automaticallyImplyLeading: false, // Hide the default back button space
+      //   leading: IconButton(
+      //     icon: Icon(Icons.arrow_back, color: Colors.white), // Set the arrow color
+      //     onPressed: () {
+      //       Navigator.of(context).pushReplacementNamed('/login');
+      //       // Handle the back nabutton action here
+      //     },
+      //   ),
+      // ),
 
       body: Container(
         decoration: BoxDecoration(
@@ -93,6 +112,31 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       prefixIcon: Icon(
                         Icons.email,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: TextFormField(
+                    onChanged: (value) {
+                      _password = value;
+                    },
+                    style: TextStyle(color: Colors.white),
+                    obscureText: true, // This makes the text input hidden as a password
+                    decoration: InputDecoration(
+                      labelText: 'Password*', // Add a label for the password
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock,
                         color: Colors.white,
                       ),
                     ),
@@ -172,18 +216,20 @@ class _SignUpPageState extends State<SignUpPage> {
                     onPressed: () async {
                       User? user = await _auth.registerWithEmailAndPassword(_email, _password);
                       if (user != null) {
+                        _showSignUpSuccessAlert(context);
                         Navigator.of(context).pushReplacementNamed('/home');
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF070707), // Charcoal button color
+                      backgroundColor: Color(0xFFF6F1F1), // Charcoal button color
                     ),
                     child: Text(
                       'Sign Up',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                   ),
                 ),
+
                 SizedBox(height: 20),
                 Container(
                   width: double.infinity,
@@ -193,11 +239,11 @@ class _SignUpPageState extends State<SignUpPage> {
                       // Add Google Sign-In logic here
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black, // Black button color
+                      backgroundColor: Colors.white, // Black button color
                     ),
                     icon: Icon(
                       FontAwesomeIcons.google,
-                      color: Colors.white,
+                      color: Colors.black,
                       size: 17,
                     ),
                     label: Text('Sign Up with Google'),
