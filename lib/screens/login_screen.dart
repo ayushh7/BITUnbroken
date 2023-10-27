@@ -1,8 +1,9 @@
+import 'package:bitunbroken/screens/signup_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../auth.dart';
+import 'home_screen.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -10,13 +11,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  Future<void> _showSignInSuccessAlert(BuildContext context) async {
-    return showDialog(
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  void _showAlert(String title, String content) {
+    showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Success'),
-          content: Text('You have successfully signed in.'),
+          title: Text(title),
+          content: Text(content),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -29,28 +34,27 @@ class _LoginPageState extends State<LoginPage> {
       },
     );
   }
-  Future<void> _showIncorrectCredentialsAlert(BuildContext context) async {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Error'),
-          content: Text('Incorrect email or password. Please try again.'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+
+  Future<void> _signIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (userCredential.user != null) {
+        _showAlert('Success', 'You have successfully signed in.');
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => HomePage(user: FirebaseAuth.instance.currentUser)));
+      }
+    } catch (e) {
+      print("Error signing in: $e");
+      _showAlert('Error', 'Incorrect email or password. Please try again.');
+    }
   }
-  final AuthService _auth = AuthService();
-  late String _email;
-  late String _password;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/background.jpg'), // Replace with your image path
-            fit: BoxFit.cover, // You can adjust this to your preference
+            fit: BoxFit.cover,
           ),
         ),
         child: Center(
@@ -73,16 +77,14 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFFFFF), // White text color
+                    color: Colors.white,
                   ),
                 ),
                 SizedBox(height: 20),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: TextFormField(
-                    onChanged: (value) {
-                      _email = value;
-                    },
+                    controller: _emailController,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Email',
@@ -104,10 +106,8 @@ class _LoginPageState extends State<LoginPage> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: TextFormField(
+                    controller: _passwordController,
                     obscureText: true,
-                    onChanged: (value) {
-                      _password = value;
-                    },
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -130,28 +130,18 @@ class _LoginPageState extends State<LoginPage> {
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: ElevatedButton(
-                    onPressed: () async {
-
-                      User? user = await _auth.signInWithEmailAndPassword(_email, _password);
-                      if (user != null) {
-                        _showSignInSuccessAlert(context);
-                        Navigator.of(context).pushReplacementNamed('/home');
-                      } else {
-                        _showIncorrectCredentialsAlert(context);
-                      }
+                    onPressed: () {
+                      _signIn();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFFF6F2F2),
-                        shape: StadiumBorder()
+                      shape: StadiumBorder(),
                     ),
                     child: Text(
                       'Sign in',
                       style: TextStyle(color: Colors.black),
-
-
                     ),
                   ),
-
                 ),
                 SizedBox(height: 20),
                 Container(
@@ -161,16 +151,20 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       // Add Google Sign-In logic here
                     },
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                        shape: StadiumBorder()// Black button color
+                      shape: StadiumBorder(),
                     ),
                     icon: Icon(
                       FontAwesomeIcons.google,
                       color: Colors.black,
-                      size:17,
+                      size: 17,
                     ),
-                    label: Text('Sign in with Google', style: TextStyle(color: Colors.black),)
+                    label: Text(
+                      'Sign in with Google',
+                      style: TextStyle(color: Colors.black),
+                    ),
                   ),
                 ),
                 SizedBox(height: 80),
@@ -179,22 +173,20 @@ class _LoginPageState extends State<LoginPage> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Add login logic here
-                      Navigator.of(context).pushReplacementNamed('/signup');
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => SignUpPage(),
+                      ));
                     },
                     style: ElevatedButton.styleFrom(
-
                       backgroundColor: Color(0xFFEAE9E9),
-                        shape: StadiumBorder()// Charcoal button color
+                      shape: StadiumBorder(),
                     ),
                     child: Text(
                       'Sign Up',
                       style: TextStyle(color: Colors.black),
                     ),
                   ),
-
                 ),
-
               ],
             ),
           ),

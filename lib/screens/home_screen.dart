@@ -1,16 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:bitunbroken/screens/profile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'login_screen.dart'; // Import your login_screen.dart or provide the correct import path.
+
 class HomePage extends StatefulWidget {
+  final User? user; // Make the user parameter nullable
+
+  HomePage({required this.user});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
+
 class _HomePageState extends State<HomePage> {
   final primaryColor = Color(0xFFBB619D);
-  final backgroundColor = Color(0xFF0C0C0C);
 
-  List<Post> posts = List.generate(
-      10, (index) => Post('User $index', 'This is post $index', 'assets/images/default.jpg'));
+  String userName = "User"; // Default name if not found
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserName();
+  }
+
+  void fetchUserName() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .then((DocumentSnapshot documentSnapshot) {
+        print("Fetching user data for UID: ${user.uid}");
+        if (documentSnapshot.exists) {
+          print("User data found: ${documentSnapshot.data()}");
+          setState(() {
+            userName = documentSnapshot['name'];
+          });
+        } else {
+          print("User data not found for UID: ${user.uid}");
+        }
+      });
+    } else {
+      print("User is not authenticated.");
+    }
+  }
+
+
+  void _signOut(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+            (Route<dynamic> route) => false,
+      );
+    } catch (e) {
+      print("Error signing out: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +88,18 @@ class _HomePageState extends State<HomePage> {
               // Handle Jobs button action
             },
           ),
+          IconButton(
+            icon: Icon(Icons.logout), // Add a sign-out button
+            onPressed: () {
+              _signOut(context);
+            },
+          ),
         ],
       ),
       body: Container(
-        color: backgroundColor,
-        child: ListView.builder(
-          itemCount: posts.length,
-          itemBuilder: (context, index) {
-            return PostWidget(post: posts[index]);
-          },
+        // color: backgroundColor,
+        child: Center(
+            child: Text('Welcome, $userName'),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -69,7 +123,7 @@ class _HomePageState extends State<HomePage> {
           if (index == 2) {
             // If the "Profile" tab is tapped (index 2), navigate to the profile page.
             Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => ProfilePage(),
+              builder: (context) => ProfilePage(user: FirebaseAuth.instance.currentUser),
               ),
             );
           }
@@ -77,7 +131,12 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Add a post logic here
+          showModalBottomSheet(
+            context: context,
+            builder: (context) {
+              return AddPostWidget(user: widget.user);
+            },
+          );
         },
         child: Icon(
           Icons.add,
@@ -88,6 +147,65 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+class AddPostWidget extends StatefulWidget {
+  final User? user; // Change the parameter type to User?
+
+  AddPostWidget({required this.user});
+
+  @override
+  _AddPostWidgetState createState() => _AddPostWidgetState();
+}
+
+class _AddPostWidgetState extends State<AddPostWidget> {
+  String postText = "";
+
+  void _createPost() async {
+    if (postText.isNotEmpty) {
+      await FirebaseFirestore.instance.collection('posts').add({
+        'uid': widget.user?.uid,
+        'text': postText,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      setState(() {
+        postText = "";
+      });
+
+      // Close the bottom sheet
+      Navigator.pop(context);
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              hintText: "Logged in as ${widget.user?.email}",
+            ),
+            onChanged: (text) {
+              setState(() {
+                postText = text;
+              });
+            },
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _createPost();
+            },
+            child: Text("Post"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
 
 class Post {
   final String username;

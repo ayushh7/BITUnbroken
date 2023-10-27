@@ -9,7 +9,7 @@ plugins {
 
 dependencies {
     implementation platform('com.google.firebase:firebase-bom:32.4.0')
-    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-analytics'
     implementation "com.google.dagger:hilt-android:2.38.1"
 //    kapt "com.google.dagger:hilt-android-compiler:2.38.1"
 }
@@ -40,7 +40,7 @@ android {
         manifestPlaceholders = [applicationName: "BITUnbroken"]
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
