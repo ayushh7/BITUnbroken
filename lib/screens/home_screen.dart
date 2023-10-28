@@ -1,11 +1,13 @@
+import 'package:bitunbroken/screens/users_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:bitunbroken/screens/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'login_screen.dart'; // Import your login_screen.dart or provide the correct import path.
+
+import 'Profile.dart';
+import 'login_screen.dart';
 
 class HomePage extends StatefulWidget {
-  final User? user; // Make the user parameter nullable
+  final User? user;
 
   HomePage({required this.user});
 
@@ -13,9 +15,22 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-
 class _HomePageState extends State<HomePage> {
   final primaryColor = Color(0xFFBB619D);
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  // Handle back button press
+  Future<bool> _onBackPressed() {
+    if (_selectedIndex != 0) {
+      // If not in the first tab, navigate to the first tab
+      setState(() {
+        _selectedIndex = 0;
+      });
+      return Future.value(false); // Do not close the app
+    }
+    return Future.value(true); // Close the app if already in the first tab
+  }
+  int _selectedIndex = 0;
 
   String userName = "User"; // Default name if not found
 
@@ -49,7 +64,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
   void _signOut(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
@@ -63,9 +77,17 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+        onWillPop: _onBackPressed,
+    child: Scaffold(
       appBar: AppBar(
         title: Text('Unbroken'),
         backgroundColor: primaryColor,
@@ -77,9 +99,12 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.people),
+            icon: Icon(Icons.search),
             onPressed: () {
-              // Handle People button action
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserListScreen()),
+              );
             },
           ),
           IconButton(
@@ -96,12 +121,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Container(
-        // color: backgroundColor,
-        child: Center(
-            child: Text('Welcome, $userName'),
-        ),
-      ),
+      body: _buildPage(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: [
           BottomNavigationBarItem(
@@ -109,8 +129,8 @@ class _HomePageState extends State<HomePage> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+            icon: Icon(Icons.add),
+            label: 'Add Post',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -119,36 +139,72 @@ class _HomePageState extends State<HomePage> {
         ],
         selectedItemColor: primaryColor,
         backgroundColor: Colors.white,
-        onTap: (int index) {
-          if (index == 2) {
-            // If the "Profile" tab is tapped (index 2), navigate to the profile page.
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => ProfilePage(user: FirebaseAuth.instance.currentUser),
-              ),
-            );
-          }
-        },
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (context) {
-              return AddPostWidget(user: widget.user);
+    ));
+  }
+
+  Widget _buildPage(int index) {
+    if (index == 0) {
+      return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('posts').orderBy('timestamp', descending: true).snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          return ListView.builder(
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              final postDocument = snapshot.data!.docs[index];
+              final data = postDocument.data() as Map<String, dynamic>;
+              final username = data['uid']; // The user's uid associated with the post
+              final text = data['text'] ?? "";
+
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance.collection('users').doc(username).get(),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (userSnapshot.hasError) {
+                    return Text('Error: ${userSnapshot.error}');
+                  }
+
+                  if (!userSnapshot.hasData) {
+                    return Text('No user data found'); // Handle this case as needed
+                  }
+
+                  final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                  final name = userData['name'] ?? "";
+                  final email = userData['email'] ?? "";
+
+                  final postContent = text;
+
+                  final post = Post(name, postContent, ""); // Use the user's name
+
+                  return PostWidget(post: post);
+                },
+              );
             },
           );
         },
-        child: Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
-        backgroundColor: primaryColor,
-      ),
-    );
+      );
+    }
+    else if (index == 1) {
+      return AddPostWidget(user: widget.user);
+    } else if (index == 2) {
+      return ProfilePage(user: widget.user);
+    }
+
+    return Container();
   }
 }
+
 class AddPostWidget extends StatefulWidget {
-  final User? user; // Change the parameter type to User?
+  final User? user;
 
   AddPostWidget({required this.user});
 
@@ -171,11 +227,9 @@ class _AddPostWidgetState extends State<AddPostWidget> {
         postText = "";
       });
 
-      // Close the bottom sheet
-      Navigator.pop(context);
+      // Navigator.pop(context); // Close the bottom sheet
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -205,8 +259,6 @@ class _AddPostWidgetState extends State<AddPostWidget> {
   }
 }
 
-
-
 class Post {
   final String username;
   final String content;
@@ -231,7 +283,8 @@ class PostWidget extends StatelessWidget {
         children: [
           ListTile(
             leading: CircleAvatar(
-              backgroundImage: AssetImage(post.imagePath),
+              // Add user profile image here
+              // backgroundImage: NetworkImage('profile_image_url'),
             ),
             title: Text(
               post.username,
@@ -241,37 +294,6 @@ class PostWidget extends StatelessWidget {
           Padding(
             padding: EdgeInsets.all(8),
             child: Text(post.content),
-          ),
-          Image.asset(
-            post.imagePath,
-            width: double.infinity,
-            height: 200,
-            fit: BoxFit.cover,
-          ),
-          Container(
-            padding: EdgeInsets.all(8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        // Handle like button tap
-                        // You can change the state or perform other actions here.
-                        Icon(Icons.favorite);
-                      },
-                      child: Icon(Icons.favorite_border),
-                    ),
-                    // Other widgets...
-                  ],
-                ),
-                SizedBox(width: 20), // Add spacing between icons
-                Icon(Icons.chat_bubble_outline),
-                SizedBox(width: 20), // Add spacing between icons
-                Icon(Icons.share),
-              ],
-            ),
           ),
         ],
       ),

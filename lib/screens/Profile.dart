@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class ProfilePage extends StatefulWidget {
   final User? user;
@@ -18,8 +19,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String passingBatch = '';
   String phoneNumber = '';
 
-  final DatabaseReference _userRef =
-  FirebaseDatabase.instance.reference().child('users'); // Reference to the Realtime Database
+  final CollectionReference _userRef = FirebaseFirestore.instance.collection('users');
+  // Reference to the Realtime Database
 
   // Function to fetch user data from Realtime Database
   Future<void> fetchUserData() async {
@@ -27,10 +28,11 @@ class _ProfilePageState extends State<ProfilePage> {
       final userUid = widget.user?.uid;
       if (userUid != null) {
         print("User UID: $userUid");
-        final userSnapshot = await _userRef.child(userUid).once();
-        final userData = userSnapshot.snapshot.value as Map<String, dynamic>;
+        final userDoc = await _userRef.doc(userUid).get();
 
-        if (userData != null) {
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+
           setState(() {
             currentDesignation = userData['currentDesignation'] ?? '';
             email = userData['email'] ?? '';
@@ -43,8 +45,9 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       // Handle any errors here
       print('Error fetching user data: $e');
-      }
+    }
   }
+
 
   @override
   void initState() {
@@ -55,10 +58,10 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Profile'),
-        backgroundColor: Color(0xFFBB619D),
-      ),
+      // appBar: AppBar(
+      //   title: Text('Profile'),
+      //   backgroundColor: Color(0xFFBB619D),
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

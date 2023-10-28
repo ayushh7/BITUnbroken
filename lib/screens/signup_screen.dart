@@ -76,6 +76,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   onChanged: (value) {
                     _name = value;
                   },
+                  style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Name',
                     labelStyle: TextStyle(color: Colors.white),
@@ -102,6 +103,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   onChanged: (value) {
                     _email = value;
                   },
+                  style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: TextStyle(color: Colors.white),
@@ -128,7 +130,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   onChanged: (value) {
                     _password = value;
                   },
-                  obscureText: true,
+                  obscureText: true, style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: TextStyle(color: Colors.white),
@@ -154,7 +156,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 TextFormField(
                   onChanged: (value) {
                     _phoneNumber = value;
-                  },
+                  },style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
                     labelStyle: TextStyle(color: Colors.white),
@@ -213,7 +215,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 TextFormField(
                   onChanged: (value) {
                     _currentDesignation = value;
-                  },
+                  }, style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Enter your current designation',
                     labelStyle: TextStyle(color: Colors.white),
