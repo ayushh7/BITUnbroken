@@ -2,7 +2,7 @@ import 'package:bitunbroken/screens/users_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../components/jobs.dart';
 import 'Profile.dart';
 import 'login_screen.dart';
 
@@ -110,6 +110,10 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: Icon(Icons.work),
             onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => JobsPage()),
+              );
               // Handle Jobs button action
             },
           ),
