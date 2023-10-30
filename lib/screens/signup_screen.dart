@@ -52,7 +52,7 @@ class _SignUpPageState extends State<SignUpPage> {
         body: Container(
         decoration: BoxDecoration(
         image: DecorationImage(
-        image: AssetImage('assets/images/background.jpg'), // Replace with your image path
+        image: AssetImage('assets/images/background4.jpg'), // Replace with your image path
         fit: BoxFit.cover,
           ),
       ),
@@ -198,7 +198,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   items: List.generate(86, (index) {
-                    final year = 1955 + index;
+                    final year = 2030 - index;
                     return DropdownMenuItem<String>(
                       value: year.toString(),
                       child: Text(year.toString()),

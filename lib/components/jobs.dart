@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class JobsPage extends StatefulWidget {
 
@@ -9,9 +11,14 @@ class JobsPage extends StatefulWidget {
 }
 
 class _JobsPageState extends State<JobsPage> {
-  final primaryColor = Color(0xFFBB619D);
+  final primaryColor=Color(0xFF1C1A1A);
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  @override
+  void initState() {
+    super.initState();
+    initUrlLauncher();
+  }
 
   String jobTitle = "";
   String companyName = "";
@@ -39,7 +46,11 @@ class _JobsPageState extends State<JobsPage> {
       }
     }
   }
-
+  void initUrlLauncher() async {
+    if (await canLaunch('https://example.com')) {
+      // Do nothing, just initialization
+    }
+  }
   void _showCreateJobDialog() {
     showDialog(
       context: context,
@@ -116,24 +127,40 @@ class _JobsPageState extends State<JobsPage> {
           for (var job in jobs) {
             final jobTitle = job['job_title'];
             final companyName = job['company_name'];
-            final link = job['link'];
+            final link = job['link']; // Fetch the link from Firestore
             jobCards.add(
               Card(
                 child: ListTile(
                   title: Text(jobTitle),
-
                   subtitle: Text(companyName),
-
                   trailing: ElevatedButton(
-                    onPressed: () {
-                      // Handle job link opening here
+                    onPressed: () async {
+                      final url = link;
+
+                      try {
+                        await launch(
+                          url,
+                          forceSafariVC: false,  // Try opening in Safari (iOS) or Chrome (Android)
+                          forceWebView: false,  // Try opening in a WebView
+                        );
+                      } catch (e) {
+                        // Handle the error gracefully, e.g., show an error dialog or log the error.
+                        print('Error launching URL: $e');
+                        // You can also show an error message to the user.
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Could not open the URL. Please check your internet connection or try again later.'),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       primary: primaryColor,
                     ),
-
                     child: Text('Apply'),
-                  ),
+                  )
+
+
                 ),
               ),
             );
@@ -143,6 +170,7 @@ class _JobsPageState extends State<JobsPage> {
           );
         },
       ),
+
       floatingActionButton: FloatingActionButton(
 
         onPressed: _showCreateJobDialog,

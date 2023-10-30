@@ -1,7 +1,10 @@
 import 'package:bitunbroken/screens/users_screen.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../components/events.dart';
 import '../components/jobs.dart';
 import 'Profile.dart';
 import 'login_screen.dart';
@@ -15,9 +18,15 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
+
 class _HomePageState extends State<HomePage> {
-  final primaryColor = Color(0xFFBB619D);
+  final primaryColor=Color(0xFF1C1A1A);
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  GlobalKey<_HomePageState> homeScreenKey = GlobalKey<_HomePageState>();
+
+
+  String imageUrl = '';
 
   // Handle back button press
   Future<bool> _onBackPressed() {
@@ -30,15 +39,33 @@ class _HomePageState extends State<HomePage> {
     }
     return Future.value(true); // Close the app if already in the first tab
   }
+
   int _selectedIndex = 0;
 
   String userName = "User"; // Default name if not found
+
+  bool _isLoading = false;
+  List<DocumentSnapshot> _posts = []; // Store the loaded posts
+  int _postBatchSize = 10;
 
   @override
   void initState() {
     super.initState();
     fetchUserName();
   }
+
+
+    // Implement your logic to fetch more posts here
+    // You can use a pagination query to retrieve additional posts
+    // For example, you can keep track of the last visible post and fetch the next batch of posts.
+
+    // After fetching, add the new posts to your existing list or data structure.
+
+
+
+// Dispose the scroll controller when the widget is disposed
+
+
 
   void fetchUserName() {
     final user = FirebaseAuth.instance.currentUser;
@@ -83,128 +110,171 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
+        key: homeScreenKey,
         onWillPop: _onBackPressed,
-    child: Scaffold(
-      appBar: AppBar(
-        title: Text('Unbroken'),
-        backgroundColor: primaryColor,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.event),
-            onPressed: () {
-              // Handle Events button action
-            },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('Unbroken'),
+            backgroundColor: primaryColor,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.event),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EventsPage()),
+                  );
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UserListScreen()),
+                  );
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.work),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => JobsPage()),
+                  );
+                  // Handle Jobs button action
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.logout), // Add a sign-out button
+                onPressed: () {
+                  _signOut(context);
+                },
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserListScreen()),
-              );
-            },
+
+            body: Stack(
+              children: [
+                // Background Image
+                Image.asset(
+                  'assets/images/background7.jpg', // Replace with the path to your image asset
+                  fit: BoxFit.cover, // You can adjust the fit as needed
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+                // Your existing content
+                _buildPage(_selectedIndex, imageUrl),
+              ],
+            ),
+          bottomNavigationBar: BottomNavigationBar(
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.add),
+                label: 'Add Post',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: 'Profile',
+              ),
+            ],
+            selectedItemColor: primaryColor,
+            backgroundColor: Colors.white,
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
           ),
-          IconButton(
-            icon: Icon(Icons.work),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => JobsPage()),
-              );
-              // Handle Jobs button action
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.logout), // Add a sign-out button
-            onPressed: () {
-              _signOut(context);
-            },
-          ),
-        ],
-      ),
-      body: _buildPage(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Add Post',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        selectedItemColor: primaryColor,
-        backgroundColor: Colors.white,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
-    ));
+        ));
   }
 
-  Widget _buildPage(int index) {
+  Widget _buildPage(int index, String imageUrl) {
     if (index == 0) {
-      return StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('posts').orderBy('timestamp', descending: true).snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              final postDocument = snapshot.data!.docs[index];
-              final data = postDocument.data() as Map<String, dynamic>;
-              final username = data['uid']; // The user's uid associated with the post
-              final text = data['text'] ?? "";
-
-              return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('users').doc(username).get(),
-                builder: (context, userSnapshot) {
-                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+      return RefreshIndicator(
+        onRefresh: _refreshData, // Define the refresh action
+        child: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('posts').orderBy('timestamp', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
                     return Center(child: CircularProgressIndicator());
                   }
 
-                  if (userSnapshot.hasError) {
-                    return Text('Error: ${userSnapshot.error}');
-                  }
+                  return ListView.builder(
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final postDocument = snapshot.data!.docs[index];
+                      final data = postDocument.data() as Map<String, dynamic>;
+                      final username = data['uid']; // The user's uid associated with the post
+                      final text = data['text'] ?? "";
 
-                  if (!userSnapshot.hasData) {
-                    return Text('No user data found'); // Handle this case as needed
-                  }
+                      return FutureBuilder<DocumentSnapshot>(
+                        future: FirebaseFirestore.instance.collection('users').doc(username).get(),
+                        builder: (context, userSnapshot) {
+                          if (userSnapshot.connectionState == ConnectionState.waiting) {
+                            // return Center(child: CircularProgressIndicator());
+                          }
 
-                  final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                  final name = userData['name'] ?? "";
-                  final email = userData['email'] ?? "";
+                          if (userSnapshot.hasError) {
+                            return Text('Error: ${userSnapshot.error}');
+                          }
 
-                  final postContent = text;
+                          if (!userSnapshot.hasData) {
+                            return Text('No user data found'); // Handle this case as needed
+                          }
 
-                  final post = Post(name, postContent, ""); // Use the user's name
+                          final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                          final name = userData['name'] ?? "";
+                          final email = userData['email'] ?? "";
 
-                  return PostWidget(post: post);
+                          final postContent = text;
+
+                          final post = Post(name, postContent, imageUrl); // Use the user's name
+
+                          return PostWidget(post: post, imageUrl: imageUrl);
+                        },
+                      );
+                    },
+                  );
                 },
-              );
-            },
-          );
-        },
+              ),
+            ),
+          ],
+        ),
       );
-    }
-    else if (index == 1) {
+    } else if (index == 1) {
       return AddPostWidget(user: widget.user);
     } else if (index == 2) {
-      return ProfilePage(user: widget.user);
+      return ProfilePage(
+        user: widget.user,
+        onImageUrlChanged: (newImageUrl) {
+          setState(() {
+            imageUrl = newImageUrl;
+          });
+        },
+      );
     }
 
     return Container();
   }
+
+  Future<void> _refreshData() async {
+    // Fetch the latest data here, for example, refetch posts from Firestore
+    // Replace this with your actual data fetching logic
+    await Future.delayed(Duration(seconds: 1));
+
+    // After fetching new data, rebuild the entire page
+    setState(() {});
+  }
+
 }
 
 class AddPostWidget extends StatefulWidget {
@@ -230,8 +300,15 @@ class _AddPostWidgetState extends State<AddPostWidget> {
       setState(() {
         postText = "";
       });
+      // _onItemTapped(0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Post created successfully'),
+          duration: Duration(seconds: 2), // Adjust the duration as needed
+        ),
+      );
 
-      // Navigator.pop(context); // Close the bottom sheet
+// Close the bottom sheet
     }
   }
 
@@ -239,11 +316,16 @@ class _AddPostWidgetState extends State<AddPostWidget> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(16),
-      child: Column(
+      child: Column(mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             decoration: InputDecoration(
-              hintText: "Logged in as ${widget.user?.email}",
+              // hintText: "Logged in as ${widget.user?.email}",
+              hintText: "Create Post...",
+              hintStyle: TextStyle(
+                color: Colors.white, // Replace 'Colors.red' with the color you want
+              ),
+
             ),
             onChanged: (text) {
               setState(() {
@@ -251,11 +333,16 @@ class _AddPostWidgetState extends State<AddPostWidget> {
               });
             },
           ),
+          SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
               _createPost();
+              // Navigator.of(context).pop(); // Close the dialog
             },
-            child: Text("Post"),
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(Colors.white), // Replace with your desired button color
+            ),
+            child: Text("Post", style: TextStyle(color: Colors.black))
           ),
         ],
       ),
@@ -273,22 +360,33 @@ class Post {
 
 class PostWidget extends StatelessWidget {
   final Post post;
+  final String imageUrl;
 
-  PostWidget({required this.post});
+  PostWidget({required this.post, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: EdgeInsets.all(8),
-      elevation: 2,
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.4), // Adjust the opacity to control the translucency
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5), // Adjust the shadow opacity
+            spreadRadius: 5,
+            blurRadius: 7,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
             leading: CircleAvatar(
-              // Add user profile image here
-              // backgroundImage: NetworkImage('profile_image_url'),
+              backgroundImage: AssetImage('assets/images/background4.jpg'),
+              // backgroundImage: NetworkImage(imageUrl),
             ),
             title: Text(
               post.username,
@@ -302,5 +400,6 @@ class PostWidget extends StatelessWidget {
         ],
       ),
     );
+
   }
 }

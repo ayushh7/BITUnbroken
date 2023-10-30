@@ -7,6 +7,7 @@ class UserListScreen extends StatefulWidget {
 }
 
 class _UserListScreenState extends State<UserListScreen> {
+  final primaryColor=Color(0xFF1C1A1A);
   List<DocumentSnapshot> users = [];
   TextEditingController searchController = TextEditingController();
 
@@ -35,7 +36,7 @@ class _UserListScreenState extends State<UserListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFBB619D),
+        backgroundColor: primaryColor,
         title: Text('Search People'),
       ),
       body: Column(
@@ -43,7 +44,7 @@ class _UserListScreenState extends State<UserListScreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-              controller: searchController,
+              controller: searchController,style: TextStyle(color: primaryColor),
               decoration: InputDecoration(labelText: 'Search by Name'),
             ),
           ),
