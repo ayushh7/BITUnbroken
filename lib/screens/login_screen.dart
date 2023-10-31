@@ -46,9 +46,17 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (userCredential.user != null) {
-        _showAlert('Success', 'You have successfully signed in.');
-        Navigator.of(context).push(MaterialPageRoute(
+        // _showAlert('Success', 'You have successfully signed in.');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logged in successfully'),
+            duration: Duration(seconds: 2), // Adjust the duration as needed
+          ),
+
+        );Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (context) => HomePage(user: FirebaseAuth.instance.currentUser)));
+
       }
     } catch (e) {
       print("Error signing in: $e");
@@ -143,31 +151,31 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Add Google Sign-In logic here
-                    },
-
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: StadiumBorder(),
-                    ),
-                    icon: Icon(
-                      FontAwesomeIcons.google,
-                      color: Colors.black,
-                      size: 17,
-                    ),
-                    label: Text(
-                      'Sign in with Google',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 80),
+                SizedBox(height: 10),
+                // Container(
+                //   width: double.infinity,
+                //   padding: EdgeInsets.symmetric(horizontal: 20),
+                //   child: ElevatedButton.icon(
+                //     onPressed: () {
+                //       // Add Google Sign-In logic here
+                //     },
+                //
+                //     style: ElevatedButton.styleFrom(
+                //       backgroundColor: Colors.white,
+                //       shape: StadiumBorder(),
+                //     ),
+                //     icon: Icon(
+                //       FontAwesomeIcons.google,
+                //       color: Colors.black,
+                //       size: 17,
+                //     ),
+                //     label: Text(
+                //       'Sign in with Google',
+                //       style: TextStyle(color: Colors.black),
+                //     ),
+                //   ),
+                // ),
+                SizedBox(height: 10),
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 20),

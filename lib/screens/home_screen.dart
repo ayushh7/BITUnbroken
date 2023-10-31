@@ -219,7 +219,7 @@ class _HomePageState extends State<HomePage> {
                        future: FirebaseFirestore.instance.collection('users').doc(username).get(),
                        builder: (context, userSnapshot) {
                          if (userSnapshot.connectionState == ConnectionState.waiting) {
-                           return CircularProgressIndicator(); // Show a loading indicator
+                           // return CircularProgressIndicator(); // Show a loading indicator
                          }
 
                          if (userSnapshot.hasError) {

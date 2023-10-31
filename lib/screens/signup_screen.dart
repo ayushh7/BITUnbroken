@@ -35,9 +35,19 @@ class _SignUpPageState extends State<SignUpPage> {
             'phoneNumber': _phoneNumber,
             'passingBatch': _passingBatch,
             'currentDesignation': _currentDesignation,
-          });
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => HomePage(user: FirebaseAuth.instance.currentUser)));
+          }
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Logged in successfully'),
+              duration: Duration(seconds: 2), // Adjust the duration as needed
+            ),
+
+          );
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => HomePage(user: FirebaseAuth.instance.currentUser),
+          ));
+
         }
       } catch (error) {
         print('Error during registration and login: $error');
