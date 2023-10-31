@@ -201,51 +201,55 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('posts').orderBy('timestamp', descending: true).snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Center(child: CircularProgressIndicator());
-                  }
+             child:StreamBuilder<QuerySnapshot>(
+               stream: FirebaseFirestore.instance.collection('posts').orderBy('timestamp', descending: true).snapshots(),
+               builder: (context, snapshot) {
+                 if (!snapshot.hasData) {
+                   return Center(child: CircularProgressIndicator());
+                 }
+                 final posts = snapshot.data!.docs;
+                 List<Widget> postWidgets = [];
+                 for (var postDocument in posts) {
+                   final data = postDocument.data() as Map<String, dynamic>;
+                   final username = data['uid']; // The user's uid associated with the post
+                   final text = data['text'] ?? "";
 
-                  return ListView.builder(
-                    itemCount: snapshot.data!.docs.length,
-                    itemBuilder: (context, index) {
-                      final postDocument = snapshot.data!.docs[index];
-                      final data = postDocument.data() as Map<String, dynamic>;
-                      final username = data['uid']; // The user's uid associated with the post
-                      final text = data['text'] ?? "";
+                   postWidgets.add(
+                     FutureBuilder<DocumentSnapshot>(
+                       future: FirebaseFirestore.instance.collection('users').doc(username).get(),
+                       builder: (context, userSnapshot) {
+                         if (userSnapshot.connectionState == ConnectionState.waiting) {
+                           return CircularProgressIndicator(); // Show a loading indicator
+                         }
 
-                      return FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance.collection('users').doc(username).get(),
-                        builder: (context, userSnapshot) {
-                          if (userSnapshot.connectionState == ConnectionState.waiting) {
-                            // return Center(child: CircularProgressIndicator());
-                          }
+                         if (userSnapshot.hasError) {
+                           return Text('Error: ${userSnapshot.error}');
+                         }
 
-                          if (userSnapshot.hasError) {
-                            return Text('Error: ${userSnapshot.error}');
-                          }
+                         if (!userSnapshot.hasData) {
+                           return Text('No user data found'); // Handle this case as needed
+                         }
 
-                          if (!userSnapshot.hasData) {
-                            return Text('No user data found'); // Handle this case as needed
-                          }
+                         final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                         final name = userData['name'] ?? "";
+                         final email = userData['email'] ?? "";
 
-                          final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                          final name = userData['name'] ?? "";
-                          final email = userData['email'] ?? "";
+                         final postContent = text;
 
-                          final postContent = text;
+                         final post = Post(name, postContent, imageUrl); // Use the user's name
 
-                          final post = Post(name, postContent, imageUrl); // Use the user's name
+                         return PostWidget(post: post, imageUrl: imageUrl, currentUser: widget.user, postDocument: postDocument);
+                       },
+                     ),
+                   );
+                 }
 
-                          return PostWidget(post: post, imageUrl: imageUrl);
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
+                 return ListView(
+                   children: postWidgets,
+                 );
+               },
+             )
+
             ),
           ],
         ),
@@ -357,23 +361,46 @@ class Post {
 
   Post(this.username, this.content, this.imagePath);
 }
-
 class PostWidget extends StatelessWidget {
   final Post post;
+  final DocumentSnapshot postDocument;
   final String imageUrl;
+  final User? currentUser; // Pass the current user to the widget
 
-  PostWidget({required this.post, required this.imageUrl});
+
+  PostWidget({required this.post, required this.imageUrl, required this.currentUser,required this.postDocument});
+
+  void _deletePost(BuildContext context, String postDocId) async {
+    if (postDocId != null && post.username == currentUser?.uid) {
+      // Check if the current user is the creator of the post and the postDocId is not null
+      await FirebaseFirestore.instance.collection('posts').doc(postDocId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Post deleted successfully'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('You are not authorized to delete this post'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4), // Adjust the opacity to control the translucency
+        color: Colors.white.withOpacity(0.4),
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5), // Adjust the shadow opacity
+            color: Colors.grey.withOpacity(0.5),
             spreadRadius: 5,
             blurRadius: 7,
             offset: Offset(0, 3),
@@ -385,9 +412,10 @@ class PostWidget extends StatelessWidget {
         children: [
           ListTile(
             leading: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/background4.jpg'),
-              // backgroundImage: NetworkImage(imageUrl),
+              // backgroundImage:CachedNetworkImageProvider(imageUrl)
+                  backgroundImage: AssetImage('assets/images/background4.jpg'),
             ),
+
             title: Text(
               post.username,
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -397,9 +425,16 @@ class PostWidget extends StatelessWidget {
             padding: EdgeInsets.all(8),
             child: Text(post.content),
           ),
+          if (post.username == currentUser?.uid) // Display the delete icon for the post creator
+            IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                _deletePost(context, postDocument.id); // Pass the document ID
+              },
+            ),
+
         ],
       ),
     );
-
   }
 }
